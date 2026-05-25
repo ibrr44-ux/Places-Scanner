@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ماسح خرائط جوجل الذكي - نظام المربع الفعال</title>
+    <title>ماسح خرائط جوجل الذكي - النسخة الرسمية المستقرة</title>
     <style>
         :root {
             --primary-color: #1a73e8;
@@ -118,6 +118,7 @@
             max-height: 100px;
             overflow-y: auto;
         }
+        #map-container { display: none; } /* عنصر مخفي مطلوب لعمل مكتبة جوجل */
     </style>
 </head>
 <body>
@@ -125,7 +126,7 @@
 <div class="container">
     <header>
         <h1>مستخرج ومحلل بيانات الخرائط الذكي</h1>
-        <p>مسح دقيق بنظام المربع الجغرافي لجمع كنز التعليقات والتقييمات</p>
+        <p>نسخة متطورة تستخدم مكتبة Google الرسمية لتخطي جدران الحماية وجلب كنز البيانات</p>
     </header>
 
     <div class="card">
@@ -186,7 +187,29 @@
     </div>
 </div>
 
+<div id="map-container"></div>
+
 <script>
+    let googleMapsLoaded = false;
+
+    // دالة ديناميكية لتحميل مكتبة جوجل بالخلفية باستخدام المفتاح المدخل
+    function loadGoogleMapsScript(apiKey) {
+        return new Promise((resolve, reject) => {
+            if (googleMapsLoaded) { resolve(); return; }
+            
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ar`;
+            script.async = true;
+            script.defer = true;
+            script.onload = () => {
+                googleMapsLoaded = true;
+                resolve();
+            };
+            script.onerror = () => reject(new Error('فشل تحميل مكتبة جوجل، تأكد من صحة المفتاح.'));
+            document.head.appendChild(script);
+        });
+    }
+
     document.getElementById('searchBtn').addEventListener('click', async function() {
         const apiKey = document.getElementById('apiKey').value;
         const keyword = document.getElementById('keyword').value;
@@ -195,68 +218,83 @@
         
         if(!apiKey) { alert('من فضلك ضع مفتاح الـ API الخاص بك أولاً!'); return; }
 
-        status.innerText = "جاري الاتصال بجوجل ومسح المربع الجغرافي...";
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">جاري سحب البيانات والتعليقات الآن... برجاء الانتظار</td></tr>`;
-
-        // حساب مركز المربع تقريبياً لأن API جوجل يعتمد البحث الجغرافي الدائري أو النصي المدعم بحدود النطاق
-        const c1 = document.getElementById('coord1').value.split(',');
-        const lat = parseFloat(c1[0].trim());
-        const lng = parseFloat(c1[1].trim());
-
-        // تحضير رابط جلب المحلات (نصي بدعم الموقع الجغرافي)
-        // لحل مشكلة CORS محلياً، نستخدم آلية جلب البيانات عبر التخطي المباشر لخرائط جوجل التفاعلية
-        const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(keyword)}&location=${lat},${lng}&radius=1000&key=${apiKey}`;
-
         try {
-            const response = await fetch(url);
-            const data = await response.json();
+            status.innerText = "جاري تهيئة ومزامنة مكتبة الخرائط الرسمية مع سحابة جوجل...";
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">جاري تفعيل الاتصال الآمن...</td></tr>`;
+            
+            // تحميل المكتبة الرسمية أولاً بالمفتاح الخاص بالمستخدم
+            await loadGoogleMapsScript(apiKey);
 
-            if (data.status !== "OK") {
-                status.innerText = `خطأ من جوجل: ${data.status}. تأكد من تفعيل Places API والـ Billing الحساب.`;
-                tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color:red;">فشل جلب البيانات. السبب: ${data.status}</td></tr>`;
-                return;
-            }
+            status.innerText = "تم الاتصال بنجاح! جاري مسح المربع الجغرافي المستهدف وسحب البيانات...";
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">جاري سحب البيانات والتعليقات الآن... برجاء الانتظار</td></tr>`;
 
-            tableBody.innerHTML = ""; // تنظيف الجدول لبدء ملئه
-            const places = data.results;
-            status.innerText = `تم العثور على ${places.length} محل. جاري استخراج التعليقات التفصيلية لكل محل...`;
+            // قراءة الإحداثيات
+            const c1 = document.getElementById('coord1').value.split(',');
+            const lat = parseFloat(c1[0].trim());
+            const lng = parseFloat(c1[1].trim());
 
-            for (let place of places) {
-                // جلب تفاصيل المحل والتعليقات باستخدام الـ Place ID
-                const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=reviews&key=${apiKey}`;
-                let reviewsHtml = "<span style='color:#70757a;'>لا توجد تعليقات متاحة</span>";
-                
-                try {
-                    const detailResp = await fetch(detailsUrl);
-                    const detailData = await detailResp.json();
-                    if(detailData.result && detailData.result.reviews) {
-                        reviewsHtml = detailData.result.reviews.map(r => `
-                            <div class="review-box">
-                                <strong>⭐ ${r.rating}</strong> - ${r.text ? r.text : 'تقييم بدون نص'}
-                            </div>
-                        `).join('');
-                    }
-                } catch(e) {
-                    reviewsHtml = "<span style='color:red;'>فشل تحميل التعليقات</span>";
+            // إنشاء عنصر الخدمة الرسمي من جوجل
+            const mapDiv = document.getElementById('map-container');
+            const service = new google.maps.places.PlacesService(mapDiv);
+
+            // إعداد طلب البحث النصي المدعوم جغرافياً
+            const request = {
+                location: new google.maps.LatLng(lat, lng),
+                radius: 1000, // المسافة حول النقطة المركزية للمربع
+                query: keyword
+            };
+
+            // إرسال الطلب عبر محرك جوجل الرسمي (يتخطى حظر CORS تماماً)
+            service.textSearch(request, async (results, statusResult) => {
+                if (statusResult !== google.maps.places.PlacesServiceStatus.OK) {
+                    status.innerText = `خطأ من جوجل: ${statusResult}. تأكد من تفعيل صلاحيات Places API في حسابك.`;
+                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color:red;">فشل الجلب: ${statusResult}</td></tr>`;
+                    return;
                 }
 
-                // إضافة السطر للجدول
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${place.name}</strong></td>
-                    <td>⭐ ${place.rating || 'لا يوجد'}</td>
-                    <td>${place.user_ratings_total || 0} شخص</td>
-                    <td>${place.vicinity || place.formatted_address || 'غير محدد'}</td>
-                    <td>${reviewsHtml}</td>
-                `;
-                tableBody.appendChild(row);
-            }
+                tableBody.innerHTML = ""; // تنظيف الجدول لبدء العرض
+                status.innerText = `تم العثور على ${results.length} محل. جاري استخراج أفضل التعليقات والآراء الآن...`;
 
-            status.innerText = `تم الانتهاء بنجاح! تم استخراج كافة المحلات وتعليقاتها داخل النطاق.`;
+                for (let place of results) {
+                    // جلب تفاصيل التعليقات لكل محل عبر طلب منفصل رسمي
+                    const detailsRequest = {
+                        placeId: place.place_id,
+                        fields: ['reviews']
+                    };
+
+                    let reviewsHtml = "<span style='color:#70757a;'>لا توجد تعليقات متاحة حالياً</span>";
+
+                    await new Promise((resolveDetails) => {
+                        service.getDetails(detailsRequest, (placeDetail, detailStatus) => {
+                            if (detailStatus === google.maps.places.PlacesServiceStatus.OK && placeDetail.reviews) {
+                                reviewsHtml = placeDetail.reviews.slice(0, 5).map(r => `
+                                    <div class="review-box">
+                                        <strong>⭐ ${r.rating}</strong> - ${r.text ? r.text : 'تقييم بدون نص تعليق'}
+                                    </div>
+                                `).join('');
+                            }
+                            resolveDetails();
+                        });
+                    });
+
+                    // حقن السطر في الجدول أمام المستخدم
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${place.name}</strong></td>
+                        <td>⭐ ${place.rating || 'لا يوجد'}</td>
+                        <td>${place.user_ratings_total || 0} شخص</td>
+                        <td>${place.formatted_address || place.vicinity || 'غير محدد'}</td>
+                        <td>${reviewsHtml}</td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+
+                status.innerText = `تم الانتهاء بنجاح! تم استخراج كافة المحلات والتعليقات وعرضها في الجدول بنجاح.`;
+            });
 
         } catch (error) {
-            status.innerText = "حدث خطأ أثناء الاتصال بالخادم. تأكد من إعدادات المتصفح وصلاحية المفتاح.";
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color:red;">خطأ في الشبكة أو الأمان (CORS)</td></tr>`;
+            status.innerText = "حدث خطأ غير متوقع: " + error.message;
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color:red;">فشل تشغيل محرك البحث الجغرافي.</td></tr>`;
         }
     });
 </script>
