@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ماسح خرائط جوجل الذكي - النسخة الرسمية المستقرة</title>
+    <title>ماسح خرائط جوجل الراداري الشامل</title>
     <style>
         :root {
             --primary-color: #1a73e8;
+            --success-color: #34a853;
             --bg-color: #f8f9fa;
             --card-bg: #ffffff;
             --text-color: #3c4043;
@@ -66,6 +67,11 @@
             gap: 15px;
             margin-bottom: 20px;
         }
+        .btn-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+        }
         button {
             background-color: var(--primary-color);
             color: white;
@@ -76,9 +82,13 @@
             cursor: pointer;
             font-weight: bold;
             transition: background 0.3s;
-            width: 100%;
         }
         button:hover { background-color: #1557b0; }
+        #exportBtn {
+            background-color: var(--success-color);
+            display: none;
+        }
+        #exportBtn:hover { background-color: #2b8a43; }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -100,6 +110,9 @@
             margin-top: 15px;
             text-align: center;
             font-size: 15px;
+            background: #e8eaed;
+            padding: 10px;
+            border-radius: 6px;
         }
         .section-title {
             font-size: 16px;
@@ -118,15 +131,15 @@
             max-height: 100px;
             overflow-y: auto;
         }
-        #map-container { display: none; } /* عنصر مخفي مطلوب لعمل مكتبة جوجل */
+        #map-container { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>مستخرج ومحلل بيانات الخرائط الذكي</h1>
-        <p>نسخة متطورة تستخدم مكتبة Google الرسمية لتخطي جدران الحماية وجلب كنز البيانات</p>
+        <h1>مستخرج ومحلل بيانات الخرائط الذكي (المسح الراداري الشامل)</h1>
+        <p>تقسيم تلقائي للمربع الجغرافي لمسح المنطقة بالكامل دون ترك أي محل أو ورشة واقتناص كافة التعليقات</p>
     </header>
 
     <div class="card">
@@ -137,7 +150,7 @@
             </div>
             <div class="input-group">
                 <label for="keyword" style="color: #3c4043;">نشاط البحث:</label>
-                <input type="text" id="keyword" value="ورشة" placeholder="مثال: ورشة، مطعم" style="direction: rtl;">
+                <input type="text" id="keyword" value="ورشة" style="direction: rtl;">
             </div>
         </div>
 
@@ -145,29 +158,32 @@
         
         <div class="grid-inputs">
             <div class="input-group">
-                <label for="coord1">1- الزاوية الشمالية الشرقية:</label>
-                <input type="text" id="coord1" value="24.7080, 46.8420" placeholder="مثال: 24.707341, 46.841651">
+                <label for="coord1">1- الزاوية الشمالية الشرقية (أعلى يمين):</label>
+                <input type="text" id="coord1" value="24.7150, 46.8500">
             </div>
             <div class="input-group">
-                <label for="coord2">2- الزاوية الشمالية الغربية:</label>
-                <input type="text" id="coord2" value="24.7080, 46.8400" placeholder="مثال: 24.707341, 46.841651">
+                <label for="coord2">2- الزاوية الشمالية الغربية (أعلى يسار):</label>
+                <input type="text" id="coord2" value="24.7150, 46.8300">
             </div>
             <div class="input-group">
-                <label for="coord3">3- الزاوية الجنوبية الشرقية:</label>
-                <input type="text" id="coord3" value="24.7060, 46.8420" placeholder="مثال: 24.707341, 46.841651">
+                <label for="coord3">3- الزاوية الجنوبية الشرقية (أسفل يمين):</label>
+                <input type="text" id="coord3" value="24.7000, 46.8500">
             </div>
             <div class="input-group">
-                <label for="coord4">4- الزاوية الجنوبية الغربية:</label>
-                <input type="text" id="coord4" value="24.7060, 46.8400" placeholder="مثال: 24.707341, 46.841651">
+                <label for="coord4">4- الزاوية الجنوبية الغربية (أسفل يسار):</label>
+                <input type="text" id="coord4" value="24.7000, 46.8300">
             </div>
         </div>
         
-        <button id="searchBtn">ابدأ مسح المربع وجلب المحلات والتعليقات</button>
-        <div class="status" id="statusMessage">الحالة: جاهز.. أدخل إحداثيات المربع واضغط على زر البدء.</div>
+        <div class="btn-container">
+            <button id="searchBtn">ابدأ المسح الراداري المستمر لجلب جميع الورش</button>
+            <button id="exportBtn">تصدير كنز البيانات إلى ملف TXT</button>
+        </div>
+        <div class="status" id="statusMessage">الحالة: جاهز.. حدد حدود المربع واضغط زر البدء لبدء التجميع اللانهائي.</div>
     </div>
 
     <div class="card" style="overflow-x: auto;">
-        <h3>المحلات والتعليقات المستخرجة:</h3>
+        <h3>المحلات والتعليقات المستخرجة (بدون تكرار):</h3>
         <table>
             <thead>
                 <tr>
@@ -180,7 +196,7 @@
             </thead>
             <tbody id="resultsTable">
                 <tr>
-                    <td colspan="5" style="text-align: center; color: #9aa0a6;">لا توجد بيانات حالياً، في انتظار بدء المسح.</td>
+                    <td colspan="5" style="text-align: center; color: #9aa0a6;">لا توجد بيانات حالياً، في انتظار بدء المسح الراداري المستمر.</td>
                 </tr>
             </tbody>
         </table>
@@ -191,21 +207,16 @@
 
 <script>
     let googleMapsLoaded = false;
+    let uniquePlacesMap = new Map(); // استخدام Map لمنع تكرار المحلات نهائياً بالاعتماد على Place ID
 
-    // دالة ديناميكية لتحميل مكتبة جوجل بالخلفية باستخدام المفتاح المدخل
     function loadGoogleMapsScript(apiKey) {
         return new Promise((resolve, reject) => {
             if (googleMapsLoaded) { resolve(); return; }
-            
             const script = document.createElement('script');
             script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ar`;
-            script.async = true;
-            script.defer = true;
-            script.onload = () => {
-                googleMapsLoaded = true;
-                resolve();
-            };
-            script.onerror = () => reject(new Error('فشل تحميل مكتبة جوجل، تأكد من صحة المفتاح.'));
+            script.async = true; script.defer = true;
+            script.onload = () => { googleMapsLoaded = true; resolve(); };
+            script.onerror = () => reject(new Error('فشل تحميل المكتبة.'));
             document.head.appendChild(script);
         });
     }
@@ -215,87 +226,159 @@
         const keyword = document.getElementById('keyword').value;
         const status = document.getElementById('statusMessage');
         const tableBody = document.getElementById('resultsTable');
+        const exportBtn = document.getElementById('exportBtn');
         
         if(!apiKey) { alert('من فضلك ضع مفتاح الـ API الخاص بك أولاً!'); return; }
 
         try {
-            status.innerText = "جاري تهيئة ومزامنة مكتبة الخرائط الرسمية مع سحابة جوجل...";
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">جاري تفعيل الاتصال الآمن...</td></tr>`;
-            
-            // تحميل المكتبة الرسمية أولاً بالمفتاح الخاص بالمستخدم
+            status.innerText = "جاري تهيئة الرادار للربط مع سحابة جوجل...";
+            tableBody.innerHTML = "";
+            exportBtn.style.display = "none";
+            uniquePlacesMap.clear();
+
             await loadGoogleMapsScript(apiKey);
 
-            status.innerText = "تم الاتصال بنجاح! جاري مسح المربع الجغرافي المستهدف وسحب البيانات...";
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">جاري سحب البيانات والتعليقات الآن... برجاء الانتظار</td></tr>`;
-
-            // قراءة الإحداثيات
+            // قراءة حدود المربع واستخراج خطوط العرض والطول القصوى والدنيا
             const c1 = document.getElementById('coord1').value.split(',');
-            const lat = parseFloat(c1[0].trim());
-            const lng = parseFloat(c1[1].trim());
+            const c2 = document.getElementById('coord2').value.split(',');
+            const c3 = document.getElementById('coord3').value.split(',');
+            const c4 = document.getElementById('coord4').value.split(',');
 
-            // إنشاء عنصر الخدمة الرسمي من جوجل
+            const lats = [parseFloat(c1[0]), parseFloat(c2[0]), parseFloat(c3[0]), parseFloat(c4[0])];
+            const lngs = [parseFloat(c1[1]), parseFloat(c2[1]), parseFloat(c3[1]), parseFloat(c4[1])];
+
+            const maxLat = Math.max(...lats);
+            const minLat = Math.min(...lats);
+            const maxLng = Math.max(...lngs);
+            const minLng = Math.min(...lngs);
+
             const mapDiv = document.getElementById('map-container');
             const service = new google.maps.places.PlacesService(mapDiv);
 
-            // إعداد طلب البحث النصي المدعوم جغرافياً
-            const request = {
-                location: new google.maps.LatLng(lat, lng),
-                radius: 1000, // المسافة حول النقطة المركزية للمربع
-                query: keyword
-            };
+            // توليد نقاط مسح شبكية متقاطعة لضمان تغطية كل شبر داخل المربع (الخطوة 0.005 تعادل تقريباً 500 متر)
+            let scanPoints = [];
+            const step = 0.005; 
+            for (let lat = minLat + (step/2); lat <= maxLat; lat += step) {
+                for (let lng = minLng + (step/2); lng <= maxLng; lng += step) {
+                    scanPoints.push({ lat, lng });
+                }
+            }
 
-            // إرسال الطلب عبر محرك جوجل الرسمي (يتخطى حظر CORS تماماً)
-            service.textSearch(request, async (results, statusResult) => {
-                if (statusResult !== google.maps.places.PlacesServiceStatus.OK) {
-                    status.innerText = `خطأ من جوجل: ${statusResult}. تأكد من تفعيل صلاحيات Places API في حسابك.`;
-                    tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color:red;">فشل الجلب: ${statusResult}</td></tr>`;
+            status.innerText = `تم تقسيم المنطقة إلى ${scanPoints.length} نقطة مسح رادارية لتغطية المربع بالكامل وجلب كافة الورش...`;
+
+            // دالة مسح نقطة معينة مع دعم الصفحات المتعددة لجوجل
+            async function scanLocationPoint(pointIndex) {
+                if (pointIndex >= scanPoints.length) {
+                    status.innerText = `اكتمل المسح الراداري للمربع بالكامل! تم تجميع عدد (${uniquePlacesMap.size}) محل فريد بدون أي تكرار.`;
+                    exportBtn.style.display = "block";
                     return;
                 }
 
-                tableBody.innerHTML = ""; // تنظيف الجدول لبدء العرض
-                status.innerText = `تم العثور على ${results.length} محل. جاري استخراج أفضل التعليقات والآراء الآن...`;
+                const currentPoint = scanPoints[pointIndex];
+                status.innerText = `جاري مسح القطاع الجغرافي رقم (${pointIndex + 1} من أصل ${scanPoints.length})... إجمالي المحلات المجمعة حتى الآن: ${uniquePlacesMap.size}`;
 
-                for (let place of results) {
-                    // جلب تفاصيل التعليقات لكل محل عبر طلب منفصل رسمي
-                    const detailsRequest = {
-                        placeId: place.place_id,
-                        fields: ['reviews']
-                    };
+                const request = {
+                    location: new google.maps.LatLng(currentPoint.lat, currentPoint.lng),
+                    radius: 400, // تغطية دائرية صغيرة ومحكمة لكل نقطة شبكية لضمان جلب كل شيء
+                    query: keyword
+                };
 
-                    let reviewsHtml = "<span style='color:#70757a;'>لا توجد تعليقات متاحة حالياً</span>";
+                service.textSearch(request, async (results, statusResult, pagination) => {
+                    if (statusResult === google.maps.places.PlacesServiceStatus.OK && results) {
+                        for (let place of results) {
+                            // إذا كان المحل تم جلب بياناته مسبقاً من نقطة مسح أخرى، نتخطاه لعدم التكرار والتبذير
+                            if (uniquePlacesMap.has(place.place_id)) continue;
 
-                    await new Promise((resolveDetails) => {
-                        service.getDetails(detailsRequest, (placeDetail, detailStatus) => {
-                            if (detailStatus === google.maps.places.PlacesServiceStatus.OK && placeDetail.reviews) {
-                                reviewsHtml = placeDetail.reviews.slice(0, 5).map(r => `
-                                    <div class="review-box">
-                                        <strong>⭐ ${r.rating}</strong> - ${r.text ? r.text : 'تقييم بدون نص تعليق'}
-                                    </div>
-                                `).join('');
-                            }
-                            resolveDetails();
-                        });
-                    });
+                            const detailsRequest = { placeId: place.place_id, fields: ['reviews'] };
+                            let rawReviews = [];
+                            let reviewsHtml = "<span style='color:#70757a;'>لا توجد تعليقات متاحة</span>";
 
-                    // حقن السطر في الجدول أمام المستخدم
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><strong>${place.name}</strong></td>
-                        <td>⭐ ${place.rating || 'لا يوجد'}</td>
-                        <td>${place.user_ratings_total || 0} شخص</td>
-                        <td>${place.formatted_address || place.vicinity || 'غير محدد'}</td>
-                        <td>${reviewsHtml}</td>
-                    `;
-                    tableBody.appendChild(row);
-                }
+                            await new Promise((resolveDetails) => {
+                                service.getDetails(detailsRequest, (placeDetail, detailStatus) => {
+                                    if (detailStatus === google.maps.places.PlacesServiceStatus.OK && placeDetail.reviews) {
+                                        rawReviews = placeDetail.reviews.map(r => r.text).filter(t => t);
+                                        reviewsHtml = placeDetail.reviews.slice(0, 5).map(r => `
+                                            <div class="review-box">
+                                                <strong>⭐ ${r.rating}</strong> - ${r.text ? r.text : 'تقييم بدون نص'}
+                                            </div>
+                                        `).join('');
+                                    }
+                                    resolveDetails();
+                                });
+                            });
 
-                status.innerText = `تم الانتهاء بنجاح! تم استخراج كافة المحلات والتعليقات وعرضها في الجدول بنجاح.`;
-            });
+                            // حفظ المحل في الـ Map لمنع التكرار
+                            uniquePlacesMap.set(place.place_id, {
+                                name: place.name,
+                                rating: place.rating || 'لا يوجد',
+                                votes: place.user_ratings_total || 0,
+                                address: place.formatted_address || 'غير محدد',
+                                reviews: rawReviews
+                            });
+
+                            // إضافة فورية ومباشرة للجدول أمامك لتشاهد البيانات وهي تتدفق سطر بسطر
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><strong>${place.name}</strong></td>
+                                <td>⭐ ${place.rating || 'لا يوجد'}</td>
+                                <td>${place.user_ratings_total || 0} شخص</td>
+                                <td>${place.formatted_address || 'غير محدد'}</td>
+                                <td>${reviewsHtml}</td>
+                            `;
+                            tableBody.appendChild(row);
+                        }
+                    }
+
+                    // التحقق من الصفحات الداخلية لنفس نقطة المسح
+                    if (pagination && pagination.hasNextPage) {
+                        setTimeout(() => { pagination.nextPage(); }, 2000);
+                    } else {
+                        // الانتقال لنقطة المسح الشبكية التالية في المربع
+                        setTimeout(() => { scanLocationPoint(pointIndex + 1); }, 1000);
+                    }
+                });
+            }
+
+            // إطلاق شرارة المسح المتسلسل المتتابع
+            scanLocationPoint(0);
 
         } catch (error) {
-            status.innerText = "حدث خطأ غير متوقع: " + error.message;
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color:red;">فشل تشغيل محرك البحث الجغرافي.</td></tr>`;
+            status.innerText = "عطل غير متوقع: " + error.message;
         }
+    });
+
+    // معالجة تصدير كنز البيانات لملف TXT نقي
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        if(uniquePlacesMap.size === 0) return;
+
+        let fileContent = "==================================================\n";
+        fileContent += "تقرير المسح الراداري الشامل لكافة ورش ومحلات المنطقة\n";
+        fileContent += `إجمالي المحلات الفريدة المستخرجة: ${uniquePlacesMap.size}\n`;
+        fileContent += `تاريخ الاستخراج: ${new Date().toLocaleDateString('ar-SA')}\n`;
+        fileContent += "==================================================\n\n";
+
+        let index = 1;
+        uniquePlacesMap.forEach((place) => {
+            fileContent += `${index}. اسم المحل: ${place.name}\n`;
+            fileContent += `   التقييم العام: ⭐ ${place.rating} (${place.votes} مصوت)\n`;
+            fileContent += `   العنوان: ${place.address}\n`;
+            fileContent += `   التعليقات والآراء المتوفرة:\n`;
+            if(place.reviews.length === 0) {
+                fileContent += `      - لا توجد نصوص تعليقات.\n`;
+            } else {
+                place.reviews.forEach((review, rIndex) => {
+                    fileContent += `      [تعليق ${rIndex + 1}]: ${review.replace(/\n/g, ' ')}\n`;
+                });
+            }
+            fileContent += "\n--------------------------------------------------\n\n";
+            index++;
+        });
+
+        const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `كافة_بيانات_${document.getElementById('keyword').value}.txt`;
+        link.click();
     });
 </script>
 
